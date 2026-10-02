@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WHITELIST CHECKER — The Hood Rover</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+:root{--ink:#14232e;--line:#173044;--blue:#2f8cff;--cyan:#16c8e8;--yellow:#ffd84d;--cream:#fffaf0;--paper:#f3f7fa;--muted:#687985;--green:#42c98b}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Space Grotesk",sans-serif;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;opacity:.13;background-image:linear-gradient(rgba(20,50,70,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(20,50,70,.16) 1px,transparent 1px);background-size:24px 24px}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(20,40,55,.035) 3px 4px)}
+a{color:inherit;text-decoration:none}button,input{font-family:inherit}
+.wrap{width:min(1160px,calc(100% - 32px));margin:auto}
+header{position:sticky;top:0;z-index:30;min-height:76px;display:flex;align-items:center;padding:10px max(16px,calc((100% - 1160px)/2));background:rgba(255,250,240,.95);backdrop-filter:blur(12px);border-bottom:3px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-family:"Press Start 2P";font-size:11px;line-height:1.5;white-space:nowrap}
+.mark{width:38px;height:38px;display:block;overflow:hidden;background:var(--blue);border:3px solid var(--line);box-shadow:3px 3px 0 var(--line);flex-shrink:0}
+.mark img{width:100%;height:100%;display:block;object-fit:cover}
+main{padding:55px 0 90px}.hero{margin-bottom:28px}
+.window{background:#fff;border:4px solid var(--line);box-shadow:8px 8px 0 var(--line)}
+.window-bar{min-height:42px;display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:#dceaf2;border-bottom:4px solid var(--line);font-family:"Press Start 2P";font-size:9px}
+.window-lights{display:flex;gap:6px}.light{width:12px;height:12px;border:2px solid var(--line);background:#fff}.light:nth-child(2){background:var(--yellow)}.light:nth-child(3){background:var(--cyan)}
+.hero-content{padding:34px;text-align:center}.eyebrow{display:inline-block;margin-bottom:16px;color:var(--blue);font-family:"Press Start 2P";font-size:10px}
+h1{margin:0 0 16px;font-family:"Press Start 2P";font-size:clamp(28px,5vw,52px);line-height:1.25;letter-spacing:-2px}
+.hero-text{max-width:720px;margin:0 auto;color:var(--muted);font-size:17px;line-height:1.65}
+.checker-box{margin-top:22px;background:#173044;color:#fff;border:4px solid var(--line);box-shadow:7px 7px 0 var(--line);padding:28px}
+.checker-title{font-family:"Press Start 2P";font-size:13px;line-height:1.7;margin-bottom:9px}
+.checker-sub{color:#b9d1dc;font-size:13px;line-height:1.6;margin-bottom:22px}
+.field label{display:block;margin-bottom:8px;color:#9ddfff;font-family:"Press Start 2P";font-size:8px}
+.field input{width:100%;border:3px solid var(--line);background:#fff;color:var(--ink);padding:15px;outline:none;font-size:14px;font-weight:700}
+.field input:focus{box-shadow:4px 4px 0 var(--cyan)}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;width:100%;border:3px solid var(--line);background:var(--blue);color:#fff;padding:13px 16px;font-family:"Press Start 2P";font-size:9px;box-shadow:5px 5px 0 var(--line);cursor:pointer;transition:.15s ease}
+.btn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--line)}
+.btn:disabled{opacity:.6;cursor:wait}
+.check-row{margin-top:20px}
+.result{display:none;margin-top:22px;border:4px solid var(--line);box-shadow:6px 6px 0 var(--line);padding:24px;text-align:center;background:#fff}
+.result.show{display:block}.result.ok{background:#dff8ea;border-color:#21885d;color:#21885d}.result.no{background:#fff0f0;border-color:#b22d2d;color:#9b2424}
+.result-icon{width:68px;height:68px;margin:0 auto 18px;display:grid;place-items:center;border:4px solid var(--line);box-shadow:5px 5px 0 var(--line);font-size:30px;font-weight:900;background:var(--green);color:#fff}
+.result.no .result-icon{background:#b22d2d}
+.result h2{margin:0 0 12px;font-family:"Press Start 2P";font-size:16px;line-height:1.6}
+.result p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+.note{margin-top:22px;background:#fff;border:4px solid var(--line);box-shadow:6px 6px 0 var(--line);padding:20px}
+.note strong{display:block;font-family:"Press Start 2P";font-size:10px;margin-bottom:10px}.note span{color:var(--muted);font-size:12px;line-height:1.6}
+footer{border-top:4px solid var(--line);background:#fff;padding:28px 0 40px}.footer{display:flex;justify-content:space-between;gap:20px;color:var(--muted);font-size:13px;font-weight:700}
+.reveal{opacity:0;transform:translateY(20px)}.reveal.visible{opacity:1;transform:none;transition:opacity .65s ease,transform .65s ease}
+@media(max-width:620px){.wrap{width:calc(100% - 20px)}main{padding-top:30px}header{min-height:68px;padding:8px 10px}.brand{font-size:8px;gap:7px}.brand .mark{width:34px;height:34px}.hero-content{padding:24px 20px}h1{font-size:28px}.hero-text{font-size:14px}.checker-box{padding:20px 16px}.footer{display:block}.footer div+div{margin-top:10px}}
+</style>
+</head>
+<body>
+<header>
+<a class="brand" href="./"><span class="mark"><img src="./assets/rovers/rover-01.png" alt="Hood Rover"></span>THE HOOD ROVER</a>
+</header>
+
+<main><div class="wrap">
+<section class="hero reveal visible">
+<div class="window">
+<div class="window-bar"><span>CHECKER.EXE</span><span class="window-lights"><i class="light"></i><i class="light"></i><i class="light"></i></span></div>
+<div class="hero-content">
+<span class="eyebrow">THE HOOD ROVER // WHITELIST</span>
+<h1>CHECKER</h1>
+<p class="hero-text">Enter your EVM wallet address to check whether it is currently registered on The Hood Rover whitelist.</p>
+</div>
+</div>
+</section>
+
+<section class="checker-box reveal">
+<div class="checker-title">WHITELIST STATUS</div>
+<div class="checker-sub">Your wallet is checked directly against the live whitelist database. New submissions become available here without redeploying this page.</div>
+<form id="checkerForm">
+<div class="field"><label for="walletAddress">WALLET ADDRESS</label><input id="walletAddress" type="text" placeholder="0x..." maxlength="42" autocomplete="off" spellcheck="false" required></div>
+<div class="check-row"><button class="btn" id="checkButton" type="submit">CHECK STATUS</button></div>
+</form>
+<div class="result" id="resultBox">
+<div class="result-icon" id="resultIcon"></div>
+<h2 id="resultTitle"></h2>
+<p id="resultText"></p>
+</div>
+</section>
+
+<div class="note reveal"><strong>WHITELIST CHECKER</strong><span>Enter the same EVM wallet address you submitted on the whitelist page. The checker only returns your whitelist status and does not display other users' information.</span></div>
+</div></main>
+
+<footer><div class="wrap footer"><div><b>THE HOOD ROVER</b></div><div>RETRO SYSTEM // 2026</div></div></footer>
+
+<script>
+const SUPABASE_URL="https://hyshlvuywbwhhjgqwfwi.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_LWmPzfGLuzdjDZvnwKs0Ug_Gvs5yROF";
+const {createClient}=window.supabase;
+const supabaseClient=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+const form=document.getElementById("checkerForm");
+const walletInput=document.getElementById("walletAddress");
+const checkButton=document.getElementById("checkButton");
+const resultBox=document.getElementById("resultBox");
+const resultIcon=document.getElementById("resultIcon");
+const resultTitle=document.getElementById("resultTitle");
+const resultText=document.getElementById("resultText");
+
+function validWallet(v){return /^0x[a-fA-F0-9]{40}$/.test(String(v||"").trim())}
+function showResult(found){
+ resultBox.className="result show "+(found?"ok":"no");
+ resultIcon.textContent=found?"✓":"×";
+ resultTitle.textContent=found?"WHITELISTED":"NOT WHITELISTED";
+ resultText.textContent=found?"This wallet is successfully registered on The Hood Rover whitelist.":"This wallet is not currently registered on The Hood Rover whitelist.";
+}
+form.addEventListener("submit",async e=>{
+ e.preventDefault();
+ const wallet=walletInput.value.trim().toLowerCase();
+ if(!validWallet(wallet)){showResult(false);resultTitle.textContent="INVALID WALLET";resultIcon.textContent="!";resultText.textContent="Please enter a valid EVM wallet address.";return}
+ checkButton.disabled=true;checkButton.textContent="CHECKING...";resultBox.className="result";
+ try{
+  const {data,error}=await supabaseClient.rpc("check_whitelist_status",{p_wallet_address:wallet});
+  if(error) throw error;
+  showResult(Boolean(data && data.whitelisted===true));
+ }catch(err){
+  console.error(err);
+  resultBox.className="result show no";resultIcon.textContent="!";resultTitle.textContent="CHECK FAILED";resultText.textContent="Could not check the whitelist right now. Please try again.";
+ }finally{checkButton.disabled=false;checkButton.textContent="CHECK STATUS"}
+});
+const observer=new IntersectionObserver(entries=>entries.forEach((entry,index)=>{if(entry.isIntersecting){setTimeout(()=>entry.target.classList.add("visible"),index*70);observer.unobserve(entry.target)}}),{threshold:.08});
+document.querySelectorAll(".reveal").forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
